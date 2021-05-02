@@ -1,0 +1,86 @@
+#include "Canvas.h"
+#include "ObjLoader.h"
+#include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+
+constexpr int WINDOW_WIDTH = 800;
+constexpr int WINDOW_HEIGHT = 800;
+
+static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+}
+
+
+Canvas& Canvas::GetInstance() {
+    static Canvas canvas(WINDOW_WIDTH, WINDOW_HEIGHT);
+    return canvas;
+}
+
+Canvas::~Canvas() {
+    _renderer.reset();
+    glfwDestroyWindow(_window);
+    glfwTerminate();
+}
+
+void Canvas::Run() {
+    while (!glfwWindowShouldClose(_window)) {
+        update();
+        draw();
+
+        glfwSwapBuffers(_window);
+        glfwPollEvents();
+    }
+}
+
+Canvas::Canvas(int width, int height) : _width(width), _height(height) {
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    
+    _window = glfwCreateWindow(width, height, "Lightning Generator", nullptr, nullptr);
+    if (!_window) {
+        fprintf(stderr, "Failed to create window\n");
+        glfwTerminate();
+        return;
+    }
+
+    glfwMakeContextCurrent(_window);
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        fprintf(stderr, "Failed to load glad!\n");
+        glfwTerminate();
+        return;
+    }
+    glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
+    glEnable(GL_LINE_SMOOTH);
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+
+    init();
+}
+
+void Canvas::update() {
+}
+
+void Canvas::draw() {
+    glm::vec3 eyePos = glm::vec3(0, 0, 3);
+    auto projection = glm::perspective(glm::pi<float>() * 0.5f, (float)_width / _height, 0.5f, 100.f);
+    auto view = glm::lookAt(eyePos, glm::vec3(0), glm::vec3(0, 1, 0));
+    auto model = glm::identity<glm::mat4>();
+
+    _renderer->ClearCurrentFrame();
+    _renderer->Begin(projection, view, model);
+    {
+        _mesh->Draw(_renderer);
+    }
+    _renderer->End();
+}
+
+void Canvas::init() {
+    _renderer = std::make_shared<Renderer>();
+    
+    ObjLoader loader;
+    loader.load("../../../resources/scenes/bunny.obj", "../../../resources/scenes/bunny.prt");
+    _mesh = loader.GetMesh();
+}
