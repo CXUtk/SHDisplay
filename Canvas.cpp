@@ -3,14 +3,15 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <algorithm>
+#include <filesystem>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 
 
-constexpr int WINDOW_WIDTH = 800;
-constexpr int WINDOW_HEIGHT = 800;
+constexpr int WINDOW_WIDTH = 1024;
+constexpr int WINDOW_HEIGHT = 768;
 
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -69,8 +70,10 @@ Canvas::Canvas(int width, int height) : _width(width), _height(height) {
 }
 
 void Canvas::update() {
+    ImGui::ShowDemoWindow();
     ImGui::Begin("Info");
-    ImGui::Text("FPS: %.lf\n", 1 / 0.5);
+    ImGui::Text("FPS: %.lf\n", 180.f);
+    showSkyBoxSelector();
     ImGui::End();
 
 
@@ -127,7 +130,16 @@ void Canvas::init() {
     _mesh = loader.GetMesh();
 
 
-    _renderer->SetEnvironment(std::make_shared<EnvironmentMap>("../../../resources/prt/SkyBox/"));
+    std::filesystem::path path("../../../resources/prt/");
+    for (const auto& entry : std::filesystem::directory_iterator(path)) {
+        const auto filenameStr = entry.path().filename().string();
+        if (entry.is_directory()) {
+            auto dir = entry.path().string() + "/";
+            _envirMaps[filenameStr] = std::make_shared<EnvironmentMap>(dir);
+            printf("%s\n", dir.c_str());
+        }
+    }
+
 
 
     // Initialize IMGUI
@@ -155,4 +167,22 @@ void Canvas::beginIMGUI() {
 void Canvas::endIMGUI() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void Canvas::showSkyBoxSelector() {
+    static int style_idx = -1;
+    std::vector<std::string> listNames;
+    std::string str;
+    for (auto& pair : _envirMaps) {
+        str += pair.first;
+        listNames.push_back(pair.first);
+        str.push_back('\0');
+    }
+    if (style_idx == -1) {
+        style_idx = 0;
+        _renderer->SetEnvironment(_envirMaps[listNames[style_idx]]);
+    }
+    if (ImGui::Combo("Select SkyBox", &style_idx, str.c_str())) {
+        _renderer->SetEnvironment(_envirMaps[listNames[style_idx]]);
+    }
 }

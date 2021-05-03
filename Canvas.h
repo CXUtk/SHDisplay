@@ -3,6 +3,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <memory>
+#include <map>
+
 #include "Renderer.h"
 #include "TriangleMesh.h"
 #include "Camera.h"
@@ -24,6 +26,8 @@ private:
     void beginIMGUI();
     void endIMGUI();
 
+    void showSkyBoxSelector();
+
     int _width, _height;
     GLFWwindow* _window;
 
@@ -33,4 +37,6 @@ private:
     std::shared_ptr<Renderer> _renderer;
     std::shared_ptr<TriangleMesh> _mesh;
     std::shared_ptr<Camera> _camera;
+
+    std::map<std::string, std::shared_ptr<EnvironmentMap>> _envirMaps;
 };
