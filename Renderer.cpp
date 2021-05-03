@@ -1,5 +1,50 @@
 #include "Renderer.h"
 
+static float skyboxVertices[] = {        
+    -1.0f,  1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+    -1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f
+};
+
+
 Renderer::Renderer() {
     stacktop = 0;
     memset(stack, 0, sizeof(stack));
@@ -51,9 +96,30 @@ void Renderer::ApplyPRTShader() {
     _prtShader->SetParameter<glm::mat4>("view", getCurrentTransform().view);
     _prtShader->SetParameter<glm::mat4>("model", getCurrentTransform().model);
 
-    _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_R", SHMatrix[0]);
-    _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_G", SHMatrix[1]);
-    _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_B", SHMatrix[2]);
+    _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_R", _curEnvironmentMap->GetTransferFunction(0));
+    _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_G", _curEnvironmentMap->GetTransferFunction(1));
+    _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_B", _curEnvironmentMap->GetTransferFunction(2));
+}
+
+void Renderer::SetEnvironment(const std::shared_ptr<EnvironmentMap>& envirMap) {
+    _curEnvironmentMap = envirMap;
+}
+
+void Renderer::DrawSkyBox() {
+    glDepthMask(GL_FALSE);
+    _skyBoxShader->Apply();
+
+    glBindVertexArray(_vaoBox);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, _curEnvironmentMap->GetTexture());
+    _skyBoxShader->SetParameter<glm::mat4>("projection", getCurrentTransform().projection);
+    _skyBoxShader->SetParameter<glm::mat4>("view", getCurrentTransform().view);
+    _skyBoxShader->SetParameter<int>("uCubeMap", 0);
+
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+
+    glDepthMask(GL_TRUE);
 }
 
 
@@ -63,22 +129,25 @@ DrawState& Renderer::getCurrentTransform() {
 }
 
 void Renderer::initialize() {
-    _phongShader = std::make_shared<Shader>( loadVertexFragmantShader("../../../resources/shaders/phong.vs",
+    _phongShader = std::make_shared<Shader>(loadVertexFragmantShader("../../../resources/shaders/phong.vs",
         "../../../resources/shaders/phong.frag"));
 
     _prtShader = std::make_shared<Shader>(loadVertexFragmantShader("../../../resources/shaders/PRT.vs",
         "../../../resources/shaders/PRT.frag"));
 
+    _skyBoxShader = std::make_shared<Shader>(loadVertexFragmantShader("../../../resources/shaders/skybox.vs",
+        "../../../resources/shaders/skybox.frag"));
 
-    FILE* SHFile = fopen("../../../resources/prt/CornellBox/PRT.txt", "r");
-    int n;
-    fscanf(SHFile, "%d", &n);
+    // Skybox VAO
+    glGenVertexArrays(1, &_vaoBox);
+    glGenBuffers(1, &_vboBox);
 
-    for (int i = 0; i < 9; i++) {
-        int s = i / 3;
-        int t = i % 3;
-        fscanf(SHFile, "%f %f %f", &SHMatrix[0][s][t], &SHMatrix[1][s][t], &SHMatrix[2][s][t]);
-    }
-    fclose(SHFile);
+    glBindVertexArray(_vaoBox);
+    glBindBuffer(GL_ARRAY_BUFFER, _vboBox);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
+
 }
 

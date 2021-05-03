@@ -11,7 +11,15 @@ add_executable (SHDisplay "SHDisplay.h"
         "Shader.h"
         "ShaderLoader.h"
         "ShaderLoader.cpp"
- "ObjLoader.cpp" "ObjLoader.h" "Primitive.h" "TriangleMesh.h" "TriangleMesh.cpp" "EnvironmentMap.h" "EnvironmentMap.cpp")
+         "ObjLoader.cpp"
+         "ObjLoader.h"
+         "Primitive.h"
+         "TriangleMesh.h"
+         "TriangleMesh.cpp"
+         "EnvironmentMap.h"
+         "EnvironmentMap.cpp"
+         "Camera.h"
+         "Camera.cpp")
 
 set_target_properties (SHDisplay PROPERTIES
                       CXX_STANDARD 17
@@ -39,7 +47,7 @@ endif()
 find_package(OpenGL REQUIRED)
 target_link_libraries(SHDisplay PRIVATE OpenGL::GL)
 
-
+add_subdirectory ("deps/imgui")
 add_subdirectory ("deps/glad")
 
-target_link_libraries (SHDisplay PRIVATE glad)
+target_link_libraries (SHDisplay PRIVATE glad imgui)

@@ -5,6 +5,7 @@
 #include <memory>
 #include "Renderer.h"
 #include "TriangleMesh.h"
+#include "Camera.h"
 
 class Canvas {
 public:
@@ -20,10 +21,16 @@ private:
     void draw();
     void init();
 
+    void beginIMGUI();
+    void endIMGUI();
 
     int _width, _height;
     GLFWwindow* _window;
 
+    glm::vec2 _orbitParameter;
+    bool _isDragging;
+
     std::shared_ptr<Renderer> _renderer;
     std::shared_ptr<TriangleMesh> _mesh;
+    std::shared_ptr<Camera> _camera;
 };
