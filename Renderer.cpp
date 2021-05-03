@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "Canvas.h"
 
 static float skyboxVertices[] = {        
     -1.0f,  1.0f, -1.0f,
@@ -91,15 +92,19 @@ void Renderer::ApplyPhongShader(glm::vec3 lightPos, glm::vec3 phongParameter) {
 }
 
 void Renderer::ApplyPRTShader() {
+    Canvas& canvas = Canvas::GetInstance();
+
     _prtShader->Apply();
     _prtShader->SetParameter<glm::mat4>("projection", getCurrentTransform().projection);
     _prtShader->SetParameter<glm::mat4>("view", getCurrentTransform().view);
     _prtShader->SetParameter<glm::mat4>("model", getCurrentTransform().model);
+    _prtShader->SetParameter<int>("uGammaCorrection", (int)canvas.GetGammaCorrection());
 
     _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_R", _curEnvironmentMap->GetTransferFunction(0));
     _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_G", _curEnvironmentMap->GetTransferFunction(1));
     _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_B", _curEnvironmentMap->GetTransferFunction(2));
 }
+
 
 void Renderer::SetEnvironment(const std::shared_ptr<EnvironmentMap>& envirMap) {
     _curEnvironmentMap = envirMap;

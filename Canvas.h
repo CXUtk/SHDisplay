@@ -14,6 +14,8 @@ public:
     static Canvas& GetInstance();
     ~Canvas();
 
+    bool GetGammaCorrection() const { return _gammaCorrection; }
+
     void Run();
 private:
     // Singleton constructor
@@ -33,6 +35,8 @@ private:
 
     glm::vec2 _orbitParameter;
     bool _isDragging;
+
+    bool _gammaCorrection;
 
     std::shared_ptr<Renderer> _renderer;
     std::shared_ptr<TriangleMesh> _mesh;

@@ -74,6 +74,8 @@ void Canvas::update() {
     ImGui::Begin("Info");
     ImGui::Text("FPS: %.lf\n", 180.f);
     showSkyBoxSelector();
+
+    ImGui::Checkbox("Gamma Correction", &_gammaCorrection);
     ImGui::End();
 
 
@@ -118,6 +120,7 @@ void Canvas::draw() {
 }
 
 void Canvas::init() {
+    _gammaCorrection = false;
     _orbitParameter = glm::vec2(0, glm::half_pi<float>());
     _renderer = std::make_shared<Renderer>();
 
@@ -139,7 +142,6 @@ void Canvas::init() {
             printf("%s\n", dir.c_str());
         }
     }
-
 
 
     // Initialize IMGUI
