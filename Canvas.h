@@ -15,6 +15,7 @@ public:
     ~Canvas();
 
     bool GetGammaCorrection() const { return _gammaCorrection; }
+    bool IsUnshadowed() const { return _unShadowed; }
 
     void Run();
 private:
@@ -29,18 +30,25 @@ private:
     void endIMGUI();
 
     void showSkyBoxSelector();
+    void showMeshModelSelector();
 
     int _width, _height;
     GLFWwindow* _window;
 
     glm::vec2 _orbitParameter;
     bool _isDragging;
+    float _factor;
+    float _distance;
+
+    double _elapsedPerFrame;
 
     bool _gammaCorrection;
+    bool _unShadowed;
 
     std::shared_ptr<Renderer> _renderer;
-    std::shared_ptr<TriangleMesh> _mesh;
     std::shared_ptr<Camera> _camera;
+    std::shared_ptr<TriangleMesh> _mesh;
 
     std::map<std::string, std::shared_ptr<EnvironmentMap>> _envirMaps;
+    std::map<std::string, std::shared_ptr<TriangleMesh>> _meshMaps;
 };

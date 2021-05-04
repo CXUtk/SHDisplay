@@ -13,9 +13,11 @@ public:
     ~EnvironmentMap();
 
     GLuint GetTexture() const { return _cubemapTexture; }
-    glm::mat3 GetTransferFunction(int index) const { return _prt[index]; }
+    glm::mat3 GetLightFunction(int index) const { return _prt[index]; }
+    std::vector<glm::mat4> GetUnshadowQuadraticForm() const;
 
 private:
     GLuint _cubemapTexture;
     glm::mat3 _prt[3];
+
 };

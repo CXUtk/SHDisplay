@@ -16,15 +16,13 @@ struct cmpVec3 {
         return false;
     }
 };
-static std::map<glm::vec3, int, cmpVec3> pointSet;
-static std::map<int, int> vIDMap;
 void ObjLoader::load(const std::string& path, const std::string& prtPath) {
     Positions.clear();
     Triangles.clear();
     Normals.clear();
     TexCoords.clear();
-    pointSet.clear();
-    vIDMap.clear();
+    Vertices.clear();
+    PRTs.clear();
     _totV = 0;
 
     FILE* file = fopen(path.c_str(), "r");
@@ -46,7 +44,7 @@ void ObjLoader::load(const std::string& path, const std::string& prtPath) {
     
     int n;
     fscanf(prtfile, "%d", &n);
-    if (n != Positions.size()) {
+    if (n != Vertices.size()) {
         std::cerr << "Size does not match!" << path << std::endl;
         return;
     }
@@ -63,8 +61,8 @@ void ObjLoader::load(const std::string& path, const std::string& prtPath) {
 void ObjLoader::load(const std::string& path) {
     Positions.clear();
     Triangles.clear();
-    pointSet.clear();
-    vIDMap.clear();
+    Vertices.clear();
+    PRTs.clear();
     _totV = 0;
 
     FILE* file = fopen(path.c_str(), "r");
@@ -79,31 +77,21 @@ void ObjLoader::load(const std::string& path) {
     fclose(file);
 }
 
-std::shared_ptr<TriangleMesh> ObjLoader::GetMesh() const {
+int fix(int id, int maxsz) {
+    if (id < 0) return maxsz + id;
+    return id;
+}
 
-    std::vector<VertexData> Vertices;
-    int sz = Positions.size();
+std::shared_ptr<TriangleMesh> ObjLoader::GetMesh() {
+
+    int sz = Vertices.size();
     for (int i = 0; i < sz; i++) {
-        VertexData v;
-        memset(&v, 0, sizeof(v));
-        v.Position = Positions[i];
-
-        if (!Normals.empty()) {
-            v.Normal = Normals[i];
-        }
-        if (!TexCoords.empty()) {
-            v.TexCoords = TexCoords[i];
-        }
+        VertexData& v = Vertices[i];
         if (!PRTs.empty()) {
             v.PRT = PRTs[i];
         }
-        Vertices.push_back(v);
     }
-    std::vector<glm::ivec3> triangleFaceIndices;
-    for (auto& t : Triangles) {
-        triangleFaceIndices.push_back(glm::ivec3(t.VertexID[0], t.VertexID[1], t.VertexID[2]));
-    }
-    return std::make_shared<TriangleMesh>(Vertices, triangleFaceIndices);
+    return std::make_shared<TriangleMesh>(Vertices);
 }
 
 bool readInt(const char* S, int& idx, int& num) {
@@ -159,34 +147,51 @@ void ObjLoader::process() {
         Positions.push_back(pt);
     }
     else if (!strcmp(start, "f")) {
+        int index = 0;
         int c = 0;
-        std::vector<std::tuple<int, int, int>> vertices;
+        int vd[3]{}, vn[3]{};
         while (~(c = sscanf(lineBuffer + _ptr, "%s", faceV))) {
             int id = 0;
-            int vd[3];
-            memset(vd, 0, sizeof(vd));
-            for (int j = 0; j < 3; j++) {
-                bool b = readInt(faceV, id, vd[j]);
+            bool b = readInt(faceV, id, vd[index]);
+            id++;
+            if (faceV[id - 1] != '/')break;
+            // Jump to normals
+            while (faceV[id] != '/') {
                 id++;
-                if (!b || faceV[id - 1] != '/')break;
             }
-            vertices.push_back({ vd[0] - 1, vd[1] - 1, vd[2] - 1 });
+            id++;
+            readInt(faceV, id, vn[index]);
+            index++;
             _ptr += strlen(faceV) + 1;
         }
+        VertexData V[3];
+        for (int k = 0; k < 3; k++) {
+            V[k].Position = Positions[vd[k] - 1];
+        }
+        if (vn[0] != 0) {
+            for (int k = 0; k < 3; k++) {
+                V[k].Normal = Normals[vn[k] - 1];
+            }
+        }
+        int cur = Vertices.size();
+        Triangles.push_back(glm::ivec3(cur, cur + 1, cur + 2));
+        for (int k = 0; k < 3; k++) {
+            Vertices.push_back(V[k]);
+        }
 
-        // Triangulation process
-        auto cmp = [&](int a, int b) {
-            return Positions[a].x < Positions[b].x;
-        };
-        int sz = vertices.size();
-        if (sz == 3) {
-            Triangles.push_back(TriangleFaceIndex(vertices));
-        }
-        else {
-            std::cerr << "Invalid obj file format" << std::endl;
-            assert(false);
-            return;
-        }
+        //// Triangulation process
+        //auto cmp = [&](int a, int b) {
+        //    return Positions[a].x < Positions[b].x;
+        //};
+        //int sz = vertices.size();
+        //if (sz == 3) {
+        //    Triangles.push_back(TriangleFaceIndex(vertices));
+        //}
+        //else {
+        //    std::cerr << "Invalid obj file format" << std::endl;
+        //    assert(false);
+        //    return;
+        //}
     }
     else if (!strcmp(start, "vt")) {
         double x, y;

@@ -40,9 +40,10 @@ public:
     std::vector<glm::vec2> TexCoords;
     std::vector<glm::vec3> Normals;
     std::vector<glm::mat3> PRTs;
-    std::vector<TriangleFaceIndex> Triangles;
+    std::vector<glm::ivec3> Triangles;
+    std::vector<VertexData> Vertices;
 
-    std::shared_ptr<TriangleMesh> GetMesh() const;
+    std::shared_ptr<TriangleMesh> GetMesh();
     //std::vector<DrawTriangle> GetDrawTriangles() const;
 private:
     static constexpr int MAX_BUFFER = 100005;

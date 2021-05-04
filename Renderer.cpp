@@ -99,10 +99,20 @@ void Renderer::ApplyPRTShader() {
     _prtShader->SetParameter<glm::mat4>("view", getCurrentTransform().view);
     _prtShader->SetParameter<glm::mat4>("model", getCurrentTransform().model);
     _prtShader->SetParameter<int>("uGammaCorrection", (int)canvas.GetGammaCorrection());
+    _prtShader->SetParameter<int>("uShadowed", (int)(!canvas.IsUnshadowed()));
 
-    _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_R", _curEnvironmentMap->GetTransferFunction(0));
-    _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_G", _curEnvironmentMap->GetTransferFunction(1));
-    _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_B", _curEnvironmentMap->GetTransferFunction(2));
+
+    if (canvas.IsUnshadowed()) {
+        auto M = _curEnvironmentMap->GetUnshadowQuadraticForm();
+        _prtShader->SetParameter<glm::mat4>("uEnvironmentSH.QUAD_R", M[0]);
+        _prtShader->SetParameter<glm::mat4>("uEnvironmentSH.QUAD_G", M[1]);
+        _prtShader->SetParameter<glm::mat4>("uEnvironmentSH.QUAD_B", M[2]);
+    }
+    else {
+        _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_R", _curEnvironmentMap->GetLightFunction(0));
+        _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_G", _curEnvironmentMap->GetLightFunction(1));
+        _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_B", _curEnvironmentMap->GetLightFunction(2));
+    }
 }
 
 

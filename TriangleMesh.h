@@ -9,6 +9,7 @@
 class Renderer;
 class TriangleMesh {
 public:
+    TriangleMesh(const std::vector<VertexData>& V);
     TriangleMesh(const std::vector<VertexData>& V, const std::vector<glm::ivec3>& ID);
     ~TriangleMesh();
 

@@ -10,11 +10,14 @@ uniform mat4 view;
 uniform mat4 model;
 
 uniform int uGammaCorrection;
-
+uniform int uShadowed;
 struct EnvironmentSH{
     mat3 SH_R;
     mat3 SH_G;
     mat3 SH_B;
+    mat4 QUAD_R;
+    mat4 QUAD_G;
+    mat4 QUAD_B;
 };
 
 uniform EnvironmentSH uEnvironmentSH;
@@ -28,10 +31,19 @@ float multiply(mat3 A, mat3 B){
 void main(){
     gl_Position = projection * view * model * vec4(vPos, 1);
 
-    vec3 color = vec3(multiply(uEnvironmentSH.SH_R, vPRT),
-        multiply(uEnvironmentSH.SH_G, vPRT),
-        multiply(uEnvironmentSH.SH_B, vPRT));
-
+    vec3 color;
+    
+    if(uShadowed != 0){
+        color = vec3(multiply(uEnvironmentSH.SH_R, vPRT),
+            multiply(uEnvironmentSH.SH_G, vPRT),
+            multiply(uEnvironmentSH.SH_B, vPRT));
+    }
+    else {
+        vec4 N = vec4(normalize(vNormal), 1.0);
+        color = vec3(dot(N, uEnvironmentSH.QUAD_R * N), 
+                    dot(N, uEnvironmentSH.QUAD_G * N),
+                    dot(N, uEnvironmentSH.QUAD_B * N));
+    }
     color /= 3.1415926;
 
     if (uGammaCorrection != 0) {

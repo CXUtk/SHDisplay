@@ -30,11 +30,17 @@ Canvas::~Canvas() {
 }
 
 void Canvas::Run() {
+    _elapsedPerFrame = 1.0;
+    double oldTime = glfwGetTime();
     while (!glfwWindowShouldClose(_window)) {
         beginIMGUI();
         update();
         draw();
         endIMGUI();
+
+        auto now = glfwGetTime();
+        _elapsedPerFrame = now - oldTime;
+        oldTime = now;
 
         glfwSwapBuffers(_window);
         glfwPollEvents();
@@ -72,10 +78,12 @@ Canvas::Canvas(int width, int height) : _width(width), _height(height) {
 void Canvas::update() {
     ImGui::ShowDemoWindow();
     ImGui::Begin("Info");
-    ImGui::Text("FPS: %.lf\n", 180.f);
+    ImGui::Text("FPS: %.2lf\n", 1.0 / _elapsedPerFrame);
     showSkyBoxSelector();
+    showMeshModelSelector();
 
     ImGui::Checkbox("Gamma Correction", &_gammaCorrection);
+    ImGui::Checkbox("Unshodowed", &_unShadowed);
     ImGui::End();
 
 
@@ -88,23 +96,20 @@ void Canvas::update() {
             auto pi = glm::pi<float>();
             _orbitParameter.x = std::max(-pi, std::min(pi, _orbitParameter.x));
             _orbitParameter.y = std::max(0.001f, std::min(pi - 0.001f, _orbitParameter.y));
-
-            float r = std::sin(_orbitParameter.y);
-            glm::vec3 pos = glm::vec3(r * std::sin(-_orbitParameter.x), std::cos(_orbitParameter.y), r * std::cos(-_orbitParameter.x));
-            _camera->SetEyePos(pos * 5.f);
         }
         if (ImGui::GetIO().MouseReleased[1]) {
             _isDragging = false;
         }
 
-        //// ¹öÂÖ¿ØÖÆÀëÔ­µã¾àÀë
-        //if (input->getScrollValue() != 0) {
-        //    _factor += input->getScrollValue() * -0.01f;
-        //    _factor = std::max(0.f, std::min(1.0f, _factor));
-        //    _distance = _factor * _factor * 20 + 0.5f;
-        //}
+        // ¹öÂÖ¿ØÖÆÀëÔ­µã¾àÀë
+        _factor += ImGui::GetIO().MouseWheel * -0.01f;
+        _factor = std::max(0.f, std::min(1.0f, _factor));
+        _distance = _factor * _factor * 20 + 0.5f;
 
     }
+    float r = std::sin(_orbitParameter.y);
+    glm::vec3 pos = glm::vec3(r * std::sin(-_orbitParameter.x), std::cos(_orbitParameter.y), r * std::cos(-_orbitParameter.x));
+    _camera->SetEyePos(pos * _distance);
 }
 
 void Canvas::draw() {
@@ -120,17 +125,27 @@ void Canvas::draw() {
 }
 
 void Canvas::init() {
+    _factor = 0.5f;
     _gammaCorrection = false;
+    _unShadowed = false;
     _orbitParameter = glm::vec2(0, glm::half_pi<float>());
     _renderer = std::make_shared<Renderer>();
 
     _isDragging = false;
-    _camera = std::make_shared<Camera>(glm::half_pi<float>(), (float)_width / _height, 0.5f, 100.f);
+    _camera = std::make_shared<Camera>(glm::half_pi<float>(), (float)_width / _height, 0.2f, 100.f);
     _camera->SetEyePos(glm::vec3(0, 0, 5));
     
     ObjLoader loader;
     loader.load("../../../resources/scenes/bunny.obj", "../../../resources/scenes/bunny.prt");
-    _mesh = loader.GetMesh();
+    _meshMaps["Bunny"] = loader.GetMesh();
+    loader.load("../../../resources/scenes/gd5k.obj", "../../../resources/scenes/gd5k.prt");
+    _meshMaps["Sphere"] = loader.GetMesh();
+    loader.load("../../../resources/scenes/gd32.obj", "../../../resources/scenes/gd32.prt");
+    _meshMaps["Icosahedron"] = loader.GetMesh();
+    loader.load("../../../resources/scenes/spot_triangulated_good.obj", "../../../resources/scenes/spot.prt");
+    _meshMaps["Spot"] = loader.GetMesh();
+    loader.load("../../../resources/scenes/dragon.obj", "../../../resources/scenes/dragon.prt");
+    _meshMaps["Dragon"] = loader.GetMesh();
 
 
     std::filesystem::path path("../../../resources/prt/");
@@ -186,5 +201,23 @@ void Canvas::showSkyBoxSelector() {
     }
     if (ImGui::Combo("Select SkyBox", &style_idx, str.c_str())) {
         _renderer->SetEnvironment(_envirMaps[listNames[style_idx]]);
+    }
+}
+
+void Canvas::showMeshModelSelector() {
+    static int model_idx = -1;
+    std::vector<std::string> listNames;
+    std::string str;
+    for (auto& pair : _meshMaps) {
+        str += pair.first;
+        listNames.push_back(pair.first);
+        str.push_back('\0');
+    }
+    if (model_idx == -1) {
+        model_idx = 0;
+        _mesh = _meshMaps[listNames[model_idx]];
+    }
+    if (ImGui::Combo("Select Model", &model_idx, str.c_str())) {
+        _mesh = _meshMaps[listNames[model_idx]];
     }
 }
