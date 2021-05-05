@@ -1,4 +1,4 @@
-#include "Canvas.h"
+Ôªø#include "Canvas.h"
 #include "ObjLoader.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -29,6 +29,12 @@ Canvas::~Canvas() {
     glfwTerminate();
 }
 
+glm::mat4 Canvas::GetSkyBoxRotation() const {
+    return glm::rotate(_skyBoxRotate[0], glm::vec3(1, 0, 0))
+        * glm::rotate(_skyBoxRotate[1], glm::vec3(0, 1, 0))
+        * glm::rotate(_skyBoxRotate[2], glm::vec3(0, 0, 1));
+}
+
 void Canvas::Run() {
     _elapsedPerFrame = 1.0;
     double oldTime = glfwGetTime();
@@ -54,7 +60,7 @@ Canvas::Canvas(int width, int height) : _width(width), _height(height) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-    
+
     _window = glfwCreateWindow(width, height, "PRT Lighting", nullptr, nullptr);
     if (!_window) {
         fprintf(stderr, "Failed to create window\n");
@@ -84,6 +90,9 @@ void Canvas::update() {
 
     ImGui::Checkbox("Gamma Correction", &_gammaCorrection);
     ImGui::Checkbox("Unshodowed", &_unShadowed);
+    ImGui::SliderFloat("Skybox Rotation X", &_skyBoxRotate[0], -glm::pi<float>(), glm::pi<float>(), "%.2f");
+    ImGui::SliderFloat("Skybox Rotation Y", &_skyBoxRotate[1], -glm::pi<float>(), glm::pi<float>(), "%.2f");
+    ImGui::SliderFloat("Skybox Rotation Z", &_skyBoxRotate[2], -glm::pi<float>(), glm::pi<float>(), "%.2f");
     ImGui::End();
 
 
@@ -101,7 +110,7 @@ void Canvas::update() {
             _isDragging = false;
         }
 
-        // πˆ¬÷øÿ÷∆¿Î‘≠µ„æ‡¿Î
+        // ÊªöËΩÆÊéßÂà∂Á¶ªÂéüÁÇπË∑ùÁ¶ª
         _factor += ImGui::GetIO().MouseWheel * -0.01f;
         _factor = std::max(0.f, std::min(1.0f, _factor));
         _distance = _factor * _factor * 20 + 0.5f;
@@ -130,11 +139,12 @@ void Canvas::init() {
     _unShadowed = false;
     _orbitParameter = glm::vec2(0, glm::half_pi<float>());
     _renderer = std::make_shared<Renderer>();
+    _skyBoxRotate = glm::vec3(0);
 
     _isDragging = false;
     _camera = std::make_shared<Camera>(glm::half_pi<float>(), (float)_width / _height, 0.2f, 100.f);
     _camera->SetEyePos(glm::vec3(0, 0, 5));
-    
+
     ObjLoader loader;
     loader.load("../../../resources/scenes/bunny.obj", "../../../resources/scenes/bunny.prt");
     _meshMaps["Bunny"] = loader.GetMesh();
@@ -144,8 +154,8 @@ void Canvas::init() {
     _meshMaps["Icosahedron"] = loader.GetMesh();
     loader.load("../../../resources/scenes/spot_triangulated_good.obj", "../../../resources/scenes/spot.prt");
     _meshMaps["Spot"] = loader.GetMesh();
-    loader.load("../../../resources/scenes/dragon.obj", "../../../resources/scenes/dragon.prt");
-    _meshMaps["Dragon"] = loader.GetMesh();
+    //loader.load("../../../resources/scenes/dragon.obj", "../../../resources/scenes/dragon.prt");
+    //_meshMaps["Dragon"] = loader.GetMesh();
 
 
     std::filesystem::path path("../../../resources/prt/");

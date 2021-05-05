@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -16,6 +16,7 @@ public:
 
     bool GetGammaCorrection() const { return _gammaCorrection; }
     bool IsUnshadowed() const { return _unShadowed; }
+    glm::mat4 GetSkyBoxRotation() const;
 
     void Run();
 private:
@@ -44,6 +45,8 @@ private:
 
     bool _gammaCorrection;
     bool _unShadowed;
+
+    glm::vec3 _skyBoxRotate;
 
     std::shared_ptr<Renderer> _renderer;
     std::shared_ptr<Camera> _camera;

@@ -93,6 +93,7 @@ void Renderer::ApplyPhongShader(glm::vec3 lightPos, glm::vec3 phongParameter) {
 
 void Renderer::ApplyPRTShader() {
     Canvas& canvas = Canvas::GetInstance();
+    auto R = canvas.GetSkyBoxRotation();
 
     _prtShader->Apply();
     _prtShader->SetParameter<glm::mat4>("projection", getCurrentTransform().projection);
@@ -101,17 +102,17 @@ void Renderer::ApplyPRTShader() {
     _prtShader->SetParameter<int>("uGammaCorrection", (int)canvas.GetGammaCorrection());
     _prtShader->SetParameter<int>("uShadowed", (int)(!canvas.IsUnshadowed()));
 
-
     if (canvas.IsUnshadowed()) {
-        auto M = _curEnvironmentMap->GetUnshadowQuadraticForm();
+        auto M = _curEnvironmentMap->GetUnshadowQuadraticForm(R);
         _prtShader->SetParameter<glm::mat4>("uEnvironmentSH.QUAD_R", M[0]);
         _prtShader->SetParameter<glm::mat4>("uEnvironmentSH.QUAD_G", M[1]);
         _prtShader->SetParameter<glm::mat4>("uEnvironmentSH.QUAD_B", M[2]);
     }
     else {
-        _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_R", _curEnvironmentMap->GetLightFunction(0));
-        _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_G", _curEnvironmentMap->GetLightFunction(1));
-        _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_B", _curEnvironmentMap->GetLightFunction(2));
+        auto M = _curEnvironmentMap->GetLightFunction(R);
+        _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_R", M[0]);
+        _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_G", M[1]);
+        _prtShader->SetParameter<glm::mat3>("uEnvironmentSH.SH_B", M[2]);
     }
 }
 
@@ -121,6 +122,9 @@ void Renderer::SetEnvironment(const std::shared_ptr<EnvironmentMap>& envirMap) {
 }
 
 void Renderer::DrawSkyBox() {
+    Canvas& canvas = Canvas::GetInstance();
+    auto R = canvas.GetSkyBoxRotation();
+
     glDepthMask(GL_FALSE);
     _skyBoxShader->Apply();
 
@@ -129,6 +133,7 @@ void Renderer::DrawSkyBox() {
     glBindTexture(GL_TEXTURE_CUBE_MAP, _curEnvironmentMap->GetTexture());
     _skyBoxShader->SetParameter<glm::mat4>("projection", getCurrentTransform().projection);
     _skyBoxShader->SetParameter<glm::mat4>("view", getCurrentTransform().view);
+    _skyBoxShader->SetParameter<glm::mat4>("model", R);
     _skyBoxShader->SetParameter<int>("uCubeMap", 0);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
