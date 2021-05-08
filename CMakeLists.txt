@@ -19,7 +19,7 @@ add_executable (SHDisplay "SHDisplay.h"
          "EnvironmentMap.h"
          "EnvironmentMap.cpp"
          "Camera.h"
-         "Camera.cpp")
+         "Camera.cpp" "Scene.h" "Scene.cpp")
 
 set_target_properties (SHDisplay PROPERTIES
                       CXX_STANDARD 17

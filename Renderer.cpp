@@ -1,7 +1,7 @@
-#include "Renderer.h"
+﻿#include "Renderer.h"
 #include "Canvas.h"
 
-static float skyboxVertices[] = {        
+static float skyboxVertices[] = {
     -1.0f,  1.0f, -1.0f,
     -1.0f, -1.0f, -1.0f,
      1.0f, -1.0f, -1.0f,
@@ -91,18 +91,19 @@ void Renderer::ApplyPhongShader(glm::vec3 lightPos, glm::vec3 phongParameter) {
     _phongShader->SetParameter<glm::vec3>("uLightParameter", phongParameter);
 }
 
-void Renderer::ApplyPRTShader() {
+void Renderer::ApplyPRTShader(glm::vec3 color) {
     Canvas& canvas = Canvas::GetInstance();
     auto R = canvas.GetSkyBoxRotation();
-
+    int mode = canvas.GetPRTMode();
     _prtShader->Apply();
     _prtShader->SetParameter<glm::mat4>("projection", getCurrentTransform().projection);
     _prtShader->SetParameter<glm::mat4>("view", getCurrentTransform().view);
     _prtShader->SetParameter<glm::mat4>("model", getCurrentTransform().model);
     _prtShader->SetParameter<int>("uGammaCorrection", (int)canvas.GetGammaCorrection());
-    _prtShader->SetParameter<int>("uShadowed", (int)(!canvas.IsUnshadowed()));
+    _prtShader->SetParameter<int>("uMode", mode);
+    _prtShader->SetParameter<glm::vec3>("uColor", color);
 
-    if (canvas.IsUnshadowed()) {
+    if (mode == 0) {
         auto M = _curEnvironmentMap->GetUnshadowQuadraticForm(R);
         _prtShader->SetParameter<glm::mat4>("uEnvironmentSH.QUAD_R", M[0]);
         _prtShader->SetParameter<glm::mat4>("uEnvironmentSH.QUAD_G", M[1]);
@@ -170,4 +171,3 @@ void Renderer::initialize() {
     glBindVertexArray(0);
 
 }
-

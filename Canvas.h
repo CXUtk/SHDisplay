@@ -8,6 +8,7 @@
 #include "Renderer.h"
 #include "TriangleMesh.h"
 #include "Camera.h"
+#include "Scene.h"
 
 class Canvas {
 public:
@@ -15,7 +16,7 @@ public:
     ~Canvas();
 
     bool GetGammaCorrection() const { return _gammaCorrection; }
-    bool IsUnshadowed() const { return _unShadowed; }
+    int GetPRTMode() const { return _prtMode; }
     glm::mat4 GetSkyBoxRotation() const;
 
     void Run();
@@ -32,6 +33,7 @@ private:
 
     void showSkyBoxSelector();
     void showMeshModelSelector();
+    void showPRTModeSelector();
 
     int _width, _height;
     GLFWwindow* _window;
@@ -44,14 +46,14 @@ private:
     double _elapsedPerFrame;
 
     bool _gammaCorrection;
-    bool _unShadowed;
+    int _prtMode;
 
     glm::vec3 _skyBoxRotate;
 
     std::shared_ptr<Renderer> _renderer;
     std::shared_ptr<Camera> _camera;
-    std::shared_ptr<TriangleMesh> _mesh;
+    std::shared_ptr<Scene> _curScene;
 
     std::map<std::string, std::shared_ptr<EnvironmentMap>> _envirMaps;
-    std::map<std::string, std::shared_ptr<TriangleMesh>> _meshMaps;
+    std::map<std::string, std::shared_ptr<Scene>> _sceneMaps;
 };

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -25,7 +25,7 @@ public:
 
     void ApplyPhongShader(glm::vec3 lightPos, glm::vec3 phongParameter);
 
-    void ApplyPRTShader();
+    void ApplyPRTShader(glm::vec3 color);
 
     void SetEnvironment(const std::shared_ptr<EnvironmentMap>& envirMap);
 

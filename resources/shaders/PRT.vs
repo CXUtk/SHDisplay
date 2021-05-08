@@ -1,16 +1,29 @@
-#version 330 core
+#version 450 core
 
 layout (location = 0) in vec3 vPos;
 layout (location = 1) in vec3 vNormal;
 layout (location = 2) in vec2 vTexCoord;
-layout (location = 3) in mat3 vPRT;
+
+layout (location = 3) in vec3 vPRT_R1;
+layout (location = 4) in vec3 vPRT_R2;
+layout (location = 5) in vec3 vPRT_R3;
+layout (location = 6) in vec3 vPRT_G1;
+layout (location = 7) in vec3 vPRT_G2;
+layout (location = 8) in vec3 vPRT_G3;
+layout (location = 9) in vec3 vPRT_B1;
+layout (location = 10) in vec3 vPRT_B2;
+layout (location = 11) in vec3 vPRT_B3;
+
+
 
 uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 
 uniform int uGammaCorrection;
-uniform int uShadowed;
+uniform int uMode;
+uniform vec3 uColor;
+
 struct EnvironmentSH{
     mat3 SH_R;
     mat3 SH_G;
@@ -33,17 +46,22 @@ void main(){
 
     vec3 color;
     
-    if(uShadowed != 0){
-        color = vec3(multiply(uEnvironmentSH.SH_R, vPRT),
-            multiply(uEnvironmentSH.SH_G, vPRT),
-            multiply(uEnvironmentSH.SH_B, vPRT));
-    }
-    else {
+    if(uMode == 0){
         vec4 N = vec4(normalize(vNormal), 1.0);
         color = vec3(dot(N, uEnvironmentSH.QUAD_R * N), 
                     dot(N, uEnvironmentSH.QUAD_G * N),
                     dot(N, uEnvironmentSH.QUAD_B * N));
     }
+    else{
+        mat3 vPRT_R = mat3(vPRT_R1, vPRT_R2, vPRT_R3);
+        mat3 vPRT_G = mat3(vPRT_G1, vPRT_G2, vPRT_G3);
+        mat3 vPRT_B = mat3(vPRT_B1, vPRT_B2, vPRT_B3);
+        color = vec3(multiply(uEnvironmentSH.SH_R, vPRT_R),
+            multiply(uEnvironmentSH.SH_G, vPRT_G),
+            multiply(uEnvironmentSH.SH_B, vPRT_B));
+    }
+
+    color *= uColor;
     color /= 3.1415926;
 
     if (uGammaCorrection != 0) {

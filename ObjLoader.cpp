@@ -16,13 +16,17 @@ struct cmpVec3 {
         return false;
     }
 };
-void ObjLoader::load(const std::string& path, const std::string& prtPath) {
+void ObjLoader::load(const std::string& path, FILE* prtFile) {
     Positions.clear();
-    Triangles.clear();
     Normals.clear();
     TexCoords.clear();
+
     Vertices.clear();
-    PRTs.clear();
+    Triangles.clear();
+
+    for (int i = 0; i < 3; i++) PRTs[i].clear();
+    for (int i = 0; i < 3; i++) PRTi[i].clear();
+
     _totV = 0;
 
     FILE* file = fopen(path.c_str(), "r");
@@ -36,62 +40,63 @@ void ObjLoader::load(const std::string& path, const std::string& prtPath) {
     }
     fclose(file);
 
-    FILE* prtfile = fopen(prtPath.c_str(), "r");
-    if (!prtfile) {
-        std::cerr << "Cannot open file " << path << std::endl;
-        return;
-    }
-    
+
     int n;
-    fscanf(prtfile, "%d", &n);
+    fscanf(prtFile, "%d", &n);
     if (n != Vertices.size()) {
         std::cerr << "Size does not match!" << path << std::endl;
         return;
     }
-    for(int j = 0; j < n; j++) {
-        glm::mat3 prt{};
+    for (int j = 0; j < n; j++) {
         for (int i = 0; i < 3; i++) {
-            fscanf(prtfile, "%f %f %f", &prt[i].x, &prt[i].y, &prt[i].z);
+            glm::mat3 prt;
+            for (int k = 0; k < 3; k++) {
+                fscanf(prtFile, "%f %f %f", &prt[k].x, &prt[k].y, &prt[k].z);
+            }
+            PRTs[i].push_back(prt);
         }
-        PRTs.push_back(prt);
     }
-    fclose(prtfile);
+
+    for (int j = 0; j < n; j++) {
+        for (int i = 0; i < 3; i++) {
+            glm::mat3 prt;
+            for (int k = 0; k < 3; k++) {
+                fscanf(prtFile, "%f %f %f", &prt[k].x, &prt[k].y, &prt[k].z);
+            }
+            PRTi[i].push_back(prt);
+        }
+    }
+
 }
 
-void ObjLoader::load(const std::string& path) {
-    Positions.clear();
-    Triangles.clear();
-    Vertices.clear();
-    PRTs.clear();
-    _totV = 0;
 
-    FILE* file = fopen(path.c_str(), "r");
-    if (!file) {
-        std::cerr << "Cannot open file " << path << std::endl;
-        return;
-    }
-    while (fgets(lineBuffer, MAX_BUFFER, file)) {
-        _ptr = 0;
-        process();
-    }
-    fclose(file);
-}
 
 int fix(int id, int maxsz) {
     if (id < 0) return maxsz + id;
     return id;
 }
 
-std::shared_ptr<TriangleMesh> ObjLoader::GetMesh() {
-
+std::shared_ptr<TriangleMesh> ObjLoader::GetMesh(const glm::vec3& color, const glm::mat4& transform) {
+    glm::mat4 normalTrans = glm::transpose(glm::inverse(transform));
     int sz = Vertices.size();
+
+    std::vector<VertexData> V_IR;
     for (int i = 0; i < sz; i++) {
         VertexData& v = Vertices[i];
-        if (!PRTs.empty()) {
-            v.PRT = PRTs[i];
+        v.Position = glm::vec3(transform * glm::vec4(v.Position, 1.0));
+        v.Normal = glm::vec3(normalTrans * glm::vec4(v.Normal, 0.0));
+
+        for (int j = 0; j < 3; j++) {
+            v.PRT[j] = PRTs[j][i];
         }
+
+        VertexData v2 = v;
+        for (int j = 0; j < 3; j++) {
+            v2.PRT[j] = PRTi[j][i];
+        }
+        V_IR.push_back(v2);
     }
-    return std::make_shared<TriangleMesh>(Vertices);
+    return std::make_shared<TriangleMesh>(Vertices, V_IR, color);
 }
 
 bool readInt(const char* S, int& idx, int& num) {

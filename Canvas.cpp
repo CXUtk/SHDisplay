@@ -1,5 +1,4 @@
 ﻿#include "Canvas.h"
-#include "ObjLoader.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <algorithm>
@@ -87,9 +86,10 @@ void Canvas::update() {
     ImGui::Text("FPS: %.2lf\n", 1.0 / _elapsedPerFrame);
     showSkyBoxSelector();
     showMeshModelSelector();
+    showPRTModeSelector();
 
     ImGui::Checkbox("Gamma Correction", &_gammaCorrection);
-    ImGui::Checkbox("Unshodowed", &_unShadowed);
+    //ImGui::Checkbox("Unshodowed", &_unShadowed);
     ImGui::SliderFloat("Skybox Rotation X", &_skyBoxRotate[0], -glm::pi<float>(), glm::pi<float>(), "%.2f");
     ImGui::SliderFloat("Skybox Rotation Y", &_skyBoxRotate[1], -glm::pi<float>(), glm::pi<float>(), "%.2f");
     ImGui::SliderFloat("Skybox Rotation Z", &_skyBoxRotate[2], -glm::pi<float>(), glm::pi<float>(), "%.2f");
@@ -106,15 +106,15 @@ void Canvas::update() {
             _orbitParameter.x = std::max(-pi, std::min(pi, _orbitParameter.x));
             _orbitParameter.y = std::max(0.001f, std::min(pi - 0.001f, _orbitParameter.y));
         }
-        if (ImGui::GetIO().MouseReleased[1]) {
-            _isDragging = false;
-        }
+
 
         // 滚轮控制离原点距离
         _factor += ImGui::GetIO().MouseWheel * -0.01f;
         _factor = std::max(0.f, std::min(1.0f, _factor));
         _distance = _factor * _factor * 20 + 0.5f;
-
+    }
+    if (ImGui::GetIO().MouseReleased[1]) {
+        _isDragging = false;
     }
     float r = std::sin(_orbitParameter.y);
     glm::vec3 pos = glm::vec3(r * std::sin(-_orbitParameter.x), std::cos(_orbitParameter.y), r * std::cos(-_orbitParameter.x));
@@ -128,15 +128,16 @@ void Canvas::draw() {
     _renderer->Begin(_camera->GetProjectionMatrix(), _camera->GetViewMatrix(), model);
     {
         _renderer->DrawSkyBox();
-        _mesh->Draw(_renderer);
+        _curScene->Draw(_renderer, (_prtMode == 2));
     }
     _renderer->End();
 }
 
 void Canvas::init() {
+
     _factor = 0.5f;
     _gammaCorrection = false;
-    _unShadowed = false;
+    _prtMode = 0;
     _orbitParameter = glm::vec2(0, glm::half_pi<float>());
     _renderer = std::make_shared<Renderer>();
     _skyBoxRotate = glm::vec3(0);
@@ -145,17 +146,19 @@ void Canvas::init() {
     _camera = std::make_shared<Camera>(glm::half_pi<float>(), (float)_width / _height, 0.2f, 100.f);
     _camera->SetEyePos(glm::vec3(0, 0, 5));
 
-    ObjLoader loader;
-    loader.load("../../../resources/models/bunny.obj", "../../../resources/models/bunny.prt");
-    _meshMaps["Bunny"] = loader.GetMesh();
-    loader.load("../../../resources/models/gd5k.obj", "../../../resources/models/gd5k.prt");
-    _meshMaps["Sphere"] = loader.GetMesh();
-    loader.load("../../../resources/models/gd32.obj", "../../../resources/models/gd32.prt");
-    _meshMaps["Icosahedron"] = loader.GetMesh();
-    loader.load("../../../resources/models/spot_triangulated_good.obj", "../../../resources/models/spot.prt");
-    _meshMaps["Spot"] = loader.GetMesh();
+    //ObjLoader loader;
+    //loader.load("../../../resources/models/bunny.obj", "../../../resources/models/bunny.prt");
+    //_meshMaps["Bunny"] = loader.GetMesh();
+    //loader.load("../../../resources/models/gd5k.obj", "../../../resources/models/gd5k.prt");
+    //_meshMaps["Sphere"] = loader.GetMesh();
+    //loader.load("../../../resources/models/gd32.obj", "../../../resources/models/gd32.prt");
+    //_meshMaps["Icosahedron"] = loader.GetMesh();
+    //loader.load("../../../resources/models/spot_triangulated_good.obj", "../../../resources/models/spot.prt");
+    //_meshMaps["Spot"] = loader.GetMesh();
     //loader.load("../../../resources/scenes/dragon.obj", "../../../resources/scenes/dragon.prt");
     //_meshMaps["Dragon"] = loader.GetMesh();
+
+    _sceneMaps["Spot"] = std::make_shared<Scene>("../../../resources/scenes/spot.scene");
 
 
     std::filesystem::path path("../../../resources/prt/");
@@ -218,16 +221,22 @@ void Canvas::showMeshModelSelector() {
     static int model_idx = -1;
     std::vector<std::string> listNames;
     std::string str;
-    for (auto& pair : _meshMaps) {
+    for (auto& pair : _sceneMaps) {
         str += pair.first;
         listNames.push_back(pair.first);
         str.push_back('\0');
     }
     if (model_idx == -1) {
         model_idx = 0;
-        _mesh = _meshMaps[listNames[model_idx]];
+        _curScene = _sceneMaps[listNames[model_idx]];
     }
-    if (ImGui::Combo("Select Model", &model_idx, str.c_str())) {
-        _mesh = _meshMaps[listNames[model_idx]];
+    if (ImGui::Combo("Select Scene", &model_idx, str.c_str())) {
+        _curScene = _sceneMaps[listNames[model_idx]];
+    }
+}
+
+void Canvas::showPRTModeSelector() {
+    const char* text = "UnShodowed\0Shadowed\0Inter-Reflection\0";
+    if (ImGui::Combo("PRT Mode", &_prtMode, text)) {
     }
 }

@@ -45,6 +45,7 @@ CTestTestfile.cmake
 _deps
 out
 resources/models/
+resources/scenes/
 
 
 ## Ignore Visual Studio temporary files, build results, and
