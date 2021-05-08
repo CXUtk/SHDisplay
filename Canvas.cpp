@@ -146,13 +146,13 @@ void Canvas::init() {
     _camera->SetEyePos(glm::vec3(0, 0, 5));
 
     ObjLoader loader;
-    loader.load("../../../resources/scenes/bunny.obj", "../../../resources/scenes/bunny.prt");
+    loader.load("../../../resources/models/bunny.obj", "../../../resources/models/bunny.prt");
     _meshMaps["Bunny"] = loader.GetMesh();
-    loader.load("../../../resources/scenes/gd5k.obj", "../../../resources/scenes/gd5k.prt");
+    loader.load("../../../resources/models/gd5k.obj", "../../../resources/models/gd5k.prt");
     _meshMaps["Sphere"] = loader.GetMesh();
-    loader.load("../../../resources/scenes/gd32.obj", "../../../resources/scenes/gd32.prt");
+    loader.load("../../../resources/models/gd32.obj", "../../../resources/models/gd32.prt");
     _meshMaps["Icosahedron"] = loader.GetMesh();
-    loader.load("../../../resources/scenes/spot_triangulated_good.obj", "../../../resources/scenes/spot.prt");
+    loader.load("../../../resources/models/spot_triangulated_good.obj", "../../../resources/models/spot.prt");
     _meshMaps["Spot"] = loader.GetMesh();
     //loader.load("../../../resources/scenes/dragon.obj", "../../../resources/scenes/dragon.prt");
     //_meshMaps["Dragon"] = loader.GetMesh();
