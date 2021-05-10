@@ -159,7 +159,10 @@ void Canvas::init() {
     //_meshMaps["Dragon"] = loader.GetMesh();
 
     _sceneMaps["Spot"] = std::make_shared<Scene>("../../../resources/scenes/spot.scene");
-
+    _sceneMaps["Bunny"] = std::make_shared<Scene>("../../../resources/scenes/bunny.scene");
+    _sceneMaps["Icosahedron"] = std::make_shared<Scene>("../../../resources/scenes/icosahedron.scene");
+    _sceneMaps["Dragon"] = std::make_shared<Scene>("../../../resources/scenes/dragon.scene");
+    _sceneMaps["Sphere"] = std::make_shared<Scene>("../../../resources/scenes/sphere.scene");
 
     std::filesystem::path path("../../../resources/prt/");
     for (const auto& entry : std::filesystem::directory_iterator(path)) {

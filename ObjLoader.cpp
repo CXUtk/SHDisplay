@@ -24,6 +24,8 @@ void ObjLoader::load(const std::string& path, FILE* prtFile) {
     Vertices.clear();
     Triangles.clear();
 
+    printf("Loading %s\n", path.c_str());
+
     for (int i = 0; i < 3; i++) PRTs[i].clear();
     for (int i = 0; i < 3; i++) PRTi[i].clear();
 
