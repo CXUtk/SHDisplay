@@ -161,7 +161,7 @@ void Canvas::init() {
     _sceneMaps["Spot"] = std::make_shared<Scene>("../../../resources/scenes/spot.scene");
     _sceneMaps["Bunny"] = std::make_shared<Scene>("../../../resources/scenes/bunny.scene");
     _sceneMaps["Icosahedron"] = std::make_shared<Scene>("../../../resources/scenes/icosahedron.scene");
-    _sceneMaps["Dragon"] = std::make_shared<Scene>("../../../resources/scenes/dragon.scene");
+    _sceneMaps["Sphere2"] = std::make_shared<Scene>("../../../resources/scenes/sphere2.scene");
     _sceneMaps["Sphere"] = std::make_shared<Scene>("../../../resources/scenes/sphere.scene");
 
     std::filesystem::path path("../../../resources/prt/");
